@@ -8,7 +8,6 @@ local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 
-
 local BG = Color3.fromRGB(28, 28, 28)
 local PANEL = Color3.fromRGB(36, 36, 36)
 local OUTLINE = Color3.fromRGB(55, 55, 55)
@@ -60,8 +59,8 @@ local function stroke(p, col)
 end
 
 local main = Instance.new("Frame")
-main.Size = UDim2.fromOffset(340, 228)
-main.Position = UDim2.new(0.5, -170, 0.5, -114)
+main.Size = UDim2.fromOffset(340, 270)
+main.Position = UDim2.new(0.5, -170, 0.5, -135)
 main.BackgroundColor3 = BG
 main.Parent = gui
 corner(main, 8)
@@ -121,10 +120,10 @@ pad.PaddingLeft = UDim.new(0, 10)
 pad.PaddingRight = UDim.new(0, 10)
 pad.Parent = box
 
-local function button(text, x, w, primary)
+local function button(text, x, w, primary, y)
     local b = Instance.new("TextButton")
     b.Size = UDim2.fromOffset(w, 36)
-    b.Position = UDim2.fromOffset(x, 114)
+    b.Position = UDim2.fromOffset(x, y or 114)
     b.BackgroundColor3 = primary and ACCENT or PANEL
     b.Font = Enum.Font.GothamBold
     b.Text = text
@@ -138,13 +137,14 @@ local function button(text, x, w, primary)
 end
 local checkBtn = button("Check Key", 16, 150, true)
 local getBtn = button("Get Key (work.ink)", 174, 150, false)
+local freeBtn = button("Continue without key (free)", 16, 308, false, 158)
 
 local status = Instance.new("TextLabel")
 status.BackgroundTransparency = 1
-status.Position = UDim2.fromOffset(16, 160)
+status.Position = UDim2.fromOffset(16, 204)
 status.Size = UDim2.new(1, -32, 0, 52)
 status.Font = Enum.Font.Gotham
-status.Text = "Get a key with the work.ink button if you don't have one."
+status.Text = "No key? Continue for free. Premium features need a premium key."
 status.TextColor3 = MUTED
 status.TextSize = 13
 status.TextWrapped = true
@@ -199,6 +199,24 @@ local MESSAGES = {
 }
 
 local busy = false
+
+local function load(key)
+    gui:Destroy()
+    getgenv().script_key = key
+    script_key = key
+    local ok, err = pcall(function()
+        loadstring(game:HttpGet(LOADER_URL))()
+    end)
+    if not ok then warn("[Aurum] Failed to load: " .. tostring(err)) end
+end
+
+freeBtn.MouseButton1Click:Connect(function()
+    if busy then return end
+    busy = true
+    setStatus("Loading Aurum (free)...", GOOD)
+    task.delay(0.3, load, nil)
+end)
+
 checkBtn.MouseButton1Click:Connect(function()
     if busy then return end
     local key = (box.Text or ""):gsub("%s", "")
@@ -226,16 +244,9 @@ checkBtn.MouseButton1Click:Connect(function()
         saveKey(key)
         setStatus("Key valid! Loading Aurum...", GOOD)
         task.wait(0.5)
-        gui:Destroy()
-        getgenv().script_key = key
-        script_key = key
-        local ok, err = pcall(function()
-            loadstring(game:HttpGet(LOADER_URL))()
-        end)
-        if not ok then warn("[Aurum] Failed to load: " .. tostring(err)) end
+        load(key)
     end)
 end)
-
 
 main.BackgroundTransparency = 1
 TweenService:Create(main, TweenInfo.new(0.25), { BackgroundTransparency = 0 }):Play()
